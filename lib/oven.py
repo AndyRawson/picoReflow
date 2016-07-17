@@ -226,7 +226,7 @@ class TempSensorReal(TempSensor):
 
     def run(self):
         while True:
-            'MAX31855 error handling branch
+            #MAX31855 error handling branch
             try:
                 self.temperature = self.thermocouple.get()
             except MAX31855Error as error:
