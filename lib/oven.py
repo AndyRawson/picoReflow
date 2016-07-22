@@ -31,6 +31,7 @@ try:
     GPIO.setup(config.gpio_heat, GPIO.OUT)
     GPIO.setup(config.gpio_cool, GPIO.OUT)
     GPIO.setup(config.gpio_air, GPIO.OUT)
+    GPIO.setup(config.gpio_main_power, GPIO.OUT)
     GPIO.setup(config.gpio_door, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     gpio_available = True
@@ -72,6 +73,7 @@ class Oven (threading.Thread):
         self.set_heat(False)
         self.set_cool(False)
         self.set_air(False)
+        self.set_main_power(False)
         self.pid = PID(ki=config.pid_ki, kd=config.pid_kd, kp=config.pid_kp)
 
     def run_profile(self, profile):
@@ -88,8 +90,13 @@ class Oven (threading.Thread):
     def run(self):
         temperature_count = 0
         last_temp = 0
+        self.set_main_power(True)
         while True:
             self.door = self.get_door_state()
+            if self.door:
+                self.set_main_power(True)
+            else:
+                self.set_main_power(False)
 
             if self.state == Oven.STATE_RUNNING:
                 if self.simulate:
@@ -177,6 +184,16 @@ class Oven (threading.Thread):
             self.air = 0.0
             if gpio_available:
                 GPIO.output(config.gpio_air, GPIO.HIGH)
+
+    def set_main_power(self, value):
+        if value:
+            self.main_power = 1.0
+            if gpio_available:
+                GPIO.output(config.gpio_main_power, GPIO.LOW)
+        else:
+            self.main_power = 0.0
+            if gpio_available:
+                GPIO.output(config.gpio_main_power, GPIO.HIGH)
 
     def get_state(self):
         state = {
