@@ -162,6 +162,20 @@ def handle_status():
             break
     log.info("websocket (status) closed")
 
+@app.route('/logging')
+def handle_logging():
+    wsock = get_websocket_from_request()
+    ovenWatcher.add_observer(wsock)
+    wsock.send(wsock.path)
+    log.info("websocket (status) opened")
+    while True:
+        try:
+            message = wsock.receive()
+            wsock.send("Your message was: %r" % message)
+        except WebSocketError:
+            break
+    log.info("websocket (status) closed")
+
 
 def get_profiles():
     try:

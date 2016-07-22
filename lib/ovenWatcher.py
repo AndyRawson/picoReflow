@@ -12,6 +12,7 @@ class OvenWatcher(threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
         self.log_skip_counter = 0
+        self.logging_skip_counter = 0
 
         self.oven = oven
         self.start()
@@ -69,7 +70,14 @@ class OvenWatcher(threading.Thread):
         for wsock in self.observers:
             if wsock:
                 try:
-                    wsock.send(message_json)
+                    if wsock.path == "/logging":
+                        if self.logging_skip_counter >= 120:
+                            wsock.send(message_json)
+                            self.logging_skip_counter = 0
+                        else:
+                            self.logging_skip_counter += 1
+                    else:
+                        wsock.send(message_json)
                 except:
                     log.error("could not write to socket %s"%wsock)
                     self.observers.remove(wsock)
